@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import apiService from '../services/api';
 
 const ConnectionTest = () => {
   const [backendStatus, setBackendStatus] = useState('Testing...');
@@ -10,33 +11,48 @@ const ConnectionTest = () => {
 
   const testConnection = async () => {
     try {
-      const response = await fetch('https://purple-merit.onrender.com/api/health');
-      if (response.ok) {
-        const data = await response.json();
-        setBackendStatus('✅ Backend Connected Successfully');
-        setError(null);
-      } else {
-        setBackendStatus('❌ Backend Connection Failed');
-        setError(`HTTP ${response.status}`);
-      }
+      setBackendStatus('Testing...');
+      setError(null);
+      
+      console.log('Testing connection to backend API...');
+      
+      // Use the API service for consistency
+      const response = await apiService.healthCheck();
+      
+      setBackendStatus('✅ Backend Connected Successfully');
+      setError(null);
+      console.log('Backend response:', response);
     } catch (err) {
-      setBackendStatus('❌ Cannot Reach Backend');
-      setError(err.message);
+      console.error('Connection error:', err);
+      
+      if (err.code === 'ECONNABORTED' || err.message.includes('timeout')) {
+        setBackendStatus('❌ Connection Timeout');
+        setError('Request timed out');
+      } else if (err.message.includes('Network Error') || err.message.includes('Failed to fetch')) {
+        setBackendStatus('❌ CORS or Network Error');
+        setError('Cannot reach backend - check if backend is running');
+      } else {
+        setBackendStatus('❌ Cannot Reach Backend');
+        setError(err.response?.data?.message || err.message);
+      }
     }
   };
 
   return (
-    <div className="mt-4 p-4 border rounded-lg bg-gray-50">
-      <h3 className="font-medium text-gray-900 mb-2">Backend Connection Status</h3>
-      <p className={`text-sm ${backendStatus.includes('✅') ? 'text-green-600' : 'text-red-600'}`}>
+    <div className="mt-4 p-6 border border-gray-600 rounded-xl bg-gray-800 shadow-lg">
+      <h3 className="font-medium text-white mb-3">Backend Connection Status</h3>
+      <p className={`text-sm font-medium ${backendStatus.includes('✅') ? 'text-green-400' : backendStatus.includes('Testing') ? 'text-yellow-400' : 'text-red-400'}`}>
         {backendStatus}
       </p>
       {error && (
-        <p className="text-xs text-red-500 mt-1">Error: {error}</p>
+        <p className="text-xs text-red-300 mt-2 bg-red-900 bg-opacity-30 p-2 rounded">Error: {error}</p>
       )}
+      <div className="mt-3 text-xs text-gray-400">
+        API URL: {import.meta.env.VITE_API_BASE_URL || 'http://localhost:5000/api'}
+      </div>
       <button 
         onClick={testConnection}
-        className="mt-2 px-3 py-1 bg-blue-500 text-white text-xs rounded hover:bg-blue-600"
+        className="mt-3 px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white text-sm rounded-lg transition-colors duration-200"
       >
         Test Again
       </button>

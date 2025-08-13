@@ -22,14 +22,14 @@ const DemoLogin = () => {
   };
 
   return (
-    <div className="mt-6 p-4 border border-blue-200 bg-blue-50 rounded-lg">
-      <h3 className="text-lg font-medium text-blue-900 mb-2">Demo Mode</h3>
-      <p className="text-sm text-blue-700 mb-3">
+    <div className="mt-6 p-6 border border-gray-600 bg-gray-800 rounded-xl shadow-lg">
+      <h3 className="text-lg font-medium text-white mb-2">Demo Mode</h3>
+      <p className="text-sm text-gray-300 mb-4">
         Skip authentication and explore the dashboard with demo data
       </p>
       <button
         onClick={handleDemoLogin}
-        className="w-full bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-md text-sm font-medium"
+        className="w-full bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white px-4 py-3 rounded-lg text-sm font-medium transform transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
       >
         Enter Demo Mode
       </button>

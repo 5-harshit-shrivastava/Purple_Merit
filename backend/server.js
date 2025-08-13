@@ -3,6 +3,7 @@ const cors = require('cors');
 const helmet = require('helmet');
 const morgan = require('morgan');
 require('dotenv').config();
+const rateLimit = require('express-rate-limit');
 
 const { connectDB } = require('./config/database');
 const { errorHandler, notFound } = require('./middleware/errorHandler');
@@ -18,12 +19,16 @@ const dataRoutes = require('./routes/data');
 const app = express();
 const PORT = process.env.PORT || 5000;
 
+// When running behind a proxy like Render, it's important to trust the first proxy
+// to get the correct client IP address for rate limiting.
+app.set('trust proxy', 1);
+
 // Middleware
 app.use(helmet());
 app.use(cors({
-  origin: process.env.NODE_ENV === 'production' 
-    ? ['https://your-frontend-domain.vercel.app'] 
-    : ['http://localhost:3000', 'http://localhost:5173'],
+  origin: process.env.NODE_ENV === 'production'
+    ? (process.env.FRONTEND_URL || 'https://purplemerit-frontend.vercel.app').split(',')
+    : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
   allowedHeaders: ['Content-Type', 'Authorization']
@@ -90,13 +95,32 @@ app.get('/api', (req, res) => {
   });
 });
 
+// --- Rate Limiting Middleware ---
+// A stricter limiter for authentication routes to prevent brute-force attacks
+const authLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 20, // Limit each IP to 20 auth requests per window
+	message: 'Too many authentication attempts from this IP, please try again after 15 minutes.',
+  standardHeaders: true, // Return rate limit info in the `RateLimit-*` headers
+  legacyHeaders: false, // Disable the `X-RateLimit-*` headers
+});
+
+// A more general limiter for all other API routes
+const apiLimiter = rateLimit({
+	windowMs: 15 * 60 * 1000, // 15 minutes
+	max: 200, // Limit each IP to 200 requests per window
+	message: 'Too many requests from this IP, please try again after 15 minutes.',
+  standardHeaders: true,
+  legacyHeaders: false,
+});
+
 // Routes
-app.use('/api/auth', authRoutes);
-app.use('/api/drivers', driverRoutes);
-app.use('/api/routes', routeRoutes);
-app.use('/api/orders', orderRoutes);
-app.use('/api/simulation', simulationRoutes);
-app.use('/api/data', dataRoutes);
+app.use('/api/auth', authLimiter, authRoutes);
+app.use('/api/drivers', apiLimiter, driverRoutes);
+app.use('/api/routes', apiLimiter, routeRoutes);
+app.use('/api/orders', apiLimiter, orderRoutes);
+app.use('/api/simulation', apiLimiter, simulationRoutes);
+app.use('/api/data', apiLimiter, dataRoutes);
 
 // Error handling middleware
 app.use(notFound);
