@@ -1,0 +1,52 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Purple Merit - Connection Test</title>
+    <style>
+        body { font-family: Arial, sans-serif; margin: 40px; }
+        .status { padding: 10px; margin: 10px 0; border-radius: 5px; }
+        .success { background: #d4edda; color: #155724; }
+        .error { background: #f8d7da; color: #721c24; }
+    </style>
+</head>
+<body>
+    <h1>Purple Merit Technologies</h1>
+    <h2>Frontend Connection Test</h2>
+    
+    <div id="status" class="status">Testing connection...</div>
+    
+    <script>
+        async function testConnection() {
+            const statusDiv = document.getElementById('status');
+            
+            try {
+                const response = await fetch('https://purple-merit.onrender.com/api/health');
+                const data = await response.json();
+                
+                statusDiv.className = 'status success';
+                statusDiv.innerHTML = `
+                    ✅ Backend Connected Successfully!<br>
+                    API Status: ${data.message}<br>
+                    <a href="https://purple-merit.onrender.com/api" target="_blank">View API Docs</a>
+                `;
+            } catch (error) {
+                statusDiv.className = 'status error';
+                statusDiv.innerHTML = `
+                    ❌ Connection Failed: ${error.message}<br>
+                    <button onclick="testConnection()">Try Again</button>
+                `;
+            }
+        }
+        
+        testConnection();
+    </script>
+    
+    <h3>Next Steps:</h3>
+    <p>If the connection test passes, your frontend can communicate with the backend.</p>
+    <p>The full React application is available at:</p>
+    <ul>
+        <li><a href="http://localhost:3000">http://localhost:3000</a></li>
+        <li><a href="http://172.23.228.30:3000">http://172.23.228.30:3000</a></li>
+    </ul>
+</body>
+</html>
