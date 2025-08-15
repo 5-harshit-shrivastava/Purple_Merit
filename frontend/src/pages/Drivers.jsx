@@ -11,12 +11,23 @@ const Drivers = () => {
   const [editingId, setEditingId] = useState(null)
   const [editName, setEditName] = useState('')
   const [editStatus, setEditStatus] = useState('available')
+  const [editShiftHours, setEditShiftHours] = useState(0)
+  const [editPast7Hours, setEditPast7Hours] = useState(0)
 
   const load = async () => {
     setLoading(true)
     try {
       const data = await api.getDrivers()
       setDrivers(data || [])
+    } catch (err) {
+      console.error('Error loading drivers:', err)
+      if (err.response?.status === 401) {
+        alert('Session expired. Please login again.')
+        // Redirect to login
+        window.location.href = '/login'
+      } else {
+        alert('Failed to load drivers: ' + (err.response?.data?.error || err.message))
+      }
     } finally {
       setLoading(false)
     }
@@ -27,17 +38,22 @@ const Drivers = () => {
   const addDriver = async (e) => {
     e.preventDefault()
     if (!name.trim()) return
-    await api.createDriver({
-      name,
-      status,
-      current_shift_hours: Number(shiftHours) || 0,
-      past_7_day_work_hours: Number(past7Hours) || 0
-    })
-    setName('')
-    setStatus('available')
-    setShiftHours(0)
-    setPast7Hours(0)
-    load()
+    try {
+      await api.createDriver({
+        name,
+        status,
+        current_shift_hours: Number(shiftHours) || 0,
+        past_7_day_work_hours: Number(past7Hours) || 0
+      })
+      setName('')
+      setStatus('available')
+      setShiftHours(0)
+      setPast7Hours(0)
+      load()
+    } catch (err) {
+      console.error('Error creating driver:', err)
+      alert('Failed to create driver: ' + (err.response?.data?.error || err.message))
+    }
   }
 
   const startEdit = (driver) => {
@@ -57,21 +73,31 @@ const Drivers = () => {
   }
 
   const saveEdit = async (id) => {
-    const payload = {
-      name: editName,
-      status: editStatus,
-      current_shift_hours: Number(editShiftHours) || 0,
-      past_7_day_work_hours: Number(editPast7Hours) || 0
+    try {
+      const payload = {
+        name: editName,
+        status: editStatus,
+        current_shift_hours: Number(editShiftHours) || 0,
+        past_7_day_work_hours: Number(editPast7Hours) || 0
+      }
+      await api.updateDriver(id, payload)
+      cancelEdit()
+      load()
+    } catch (err) {
+      console.error('Error updating driver:', err)
+      alert('Failed to update driver: ' + (err.response?.data?.error || err.message))
     }
-    await api.updateDriver(id, payload)
-    cancelEdit()
-    load()
   }
 
   const removeDriver = async (id) => {
     if (!confirm('Delete this driver?')) return
-    await api.deleteDriver(id)
-    load()
+    try {
+      await api.deleteDriver(id)
+      load()
+    } catch (err) {
+      console.error('Error deleting driver:', err)
+      alert('Failed to delete driver: ' + (err.response?.data?.error || err.message))
+    }
   }
 
   return (

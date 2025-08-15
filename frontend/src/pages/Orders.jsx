@@ -18,6 +18,14 @@ const Orders = () => {
     try {
       const data = await api.getOrders()
       setOrders(data || [])
+    } catch (err) {
+      console.error('Error loading orders:', err)
+      if (err.response?.status === 401) {
+        alert('Session expired. Please login again.')
+        window.location.href = '/login'
+      } else {
+        alert('Failed to load orders: ' + (err.response?.data?.error || err.message))
+      }
     } finally { setLoading(false) }
   }
 
@@ -26,9 +34,14 @@ const Orders = () => {
   const addOrder = async (e) => {
     e.preventDefault()
     if (!orderId.trim() || !assignedRoute.trim()) return
-    await api.createOrder({ order_id: orderId, value_rs: Number(valueRs), assigned_route: assignedRoute, delivery_timestamp: new Date(deliveryTs).toISOString() })
-    setOrderId(''); setValueRs(500); setAssignedRoute(''); setDeliveryTs(new Date().toISOString().slice(0,16))
-    load()
+    try {
+      await api.createOrder({ order_id: orderId, value_rs: Number(valueRs), assigned_route: assignedRoute, delivery_timestamp: new Date(deliveryTs).toISOString() })
+      setOrderId(''); setValueRs(500); setAssignedRoute(''); setDeliveryTs(new Date().toISOString().slice(0,16))
+      load()
+    } catch (err) {
+      console.error('Error creating order:', err)
+      alert('Failed to create order: ' + (err.response?.data?.error || err.response?.data?.details?.join(', ') || err.message))
+    }
   }
 
   const startEdit = (o) => {
@@ -36,8 +49,42 @@ const Orders = () => {
     setEdit({ order_id: o.order_id, value_rs: o.value_rs, assigned_route: o.assigned_route, delivery_timestamp: o.delivery_timestamp?.slice?.(0,16) || '' })
   }
   const cancelEdit = () => setEditingId(null)
-  const saveEdit = async (id) => { await api.updateOrder(id, { ...edit, delivery_timestamp: new Date(edit.delivery_timestamp).toISOString() }); cancelEdit(); load() }
-  const removeOrder = async (id) => { if (!confirm('Delete this order?')) return; await api.deleteOrder(id); load() }
+  const saveEdit = async (id) => {
+    try {
+      // Validate and convert date
+      if (!edit.delivery_timestamp) {
+        alert('Delivery timestamp is required')
+        return
+      }
+      
+      const date = new Date(edit.delivery_timestamp)
+      if (isNaN(date.getTime())) {
+        alert('Invalid delivery timestamp format')
+        return
+      }
+      
+      const { order_id, ...updateData } = edit;
+      await api.updateOrder(id, { 
+        ...updateData, 
+        delivery_timestamp: date.toISOString() 
+      })
+      cancelEdit()
+      load()
+    } catch (err) {
+      console.error('Error updating order:', err)
+      alert('Failed to update order: ' + (err.response?.data?.error || err.response?.data?.details?.join(', ') || err.message))
+    }
+  }
+  const removeOrder = async (id) => { 
+    if (!confirm('Delete this order?')) return
+    try {
+      await api.deleteOrder(id)
+      load()
+    } catch (err) {
+      console.error('Error deleting order:', err)
+      alert('Failed to delete order: ' + (err.response?.data?.error || err.message))
+    }
+  }
 
   return (
     <div className="space-y-6">

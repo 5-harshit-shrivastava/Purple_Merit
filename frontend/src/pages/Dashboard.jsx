@@ -92,10 +92,10 @@ const Dashboard = () => {
             <h3 className="text-base font-semibold text-gray-900">Delivery Performance</h3>
           </div>
           <div className="p-5">
-            <div className="h-64 flex items-center justify-center">
+            <div className="h-80 flex items-center justify-center">
               <ResponsiveContainer width="100%" height="100%">
                 <PieChart>
-                  <Pie data={deliveryData} cx="50%" cy="50%" innerRadius={60} outerRadius={90} paddingAngle={5} dataKey="value">
+                  <Pie data={deliveryData} cx="50%" cy="50%" innerRadius={80} outerRadius={120} paddingAngle={5} dataKey="value">
                     {deliveryData.map((entry, index) => (
                       <Cell key={`cell-${index}`} fill={entry.color} />
                     ))}
@@ -116,7 +116,7 @@ const Dashboard = () => {
             <h3 className="text-base font-semibold text-gray-900">Fuel Cost vs Profit</h3>
           </div>
           <div className="p-5">
-            <div className="h-64">
+            <div className="h-80">
               <ResponsiveContainer width="100%" height="100%">
                 <BarChart data={fuelProfitData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />
@@ -138,7 +138,7 @@ const Dashboard = () => {
             <h3 className="text-base font-semibold text-gray-900">Profit & Efficiency Trend</h3>
           </div>
           <div className="p-5">
-            <div className="h-64">
+            <div className="h-96">
               <ResponsiveContainer width="100%" height="100%">
                 <LineChart data={trendData} margin={{ top: 20, right: 30, left: 20, bottom: 5 }}>
                   <CartesianGrid strokeDasharray="3 3" stroke="#f0f0f0" />

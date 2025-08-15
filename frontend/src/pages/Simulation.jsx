@@ -15,10 +15,9 @@ const Simulation = () => {
     setLoading(true)
     setError('')
     try {
-      const route_start_time = new Date(`${routeStartDate}T${routeStartTime}:00`).toISOString()
       const data = await api.runSimulation({
         available_drivers: availableDrivers,
-        route_start_time,
+        route_start_time: routeStartTime,
         max_hours_per_driver: maxHoursPerDriver,
       })
       setResult(data?.results || data)

@@ -18,6 +18,14 @@ const RoutesPage = () => {
     try {
       const data = await api.getRoutes()
       setRoutes(data || [])
+    } catch (err) {
+      console.error('Error loading routes:', err)
+      if (err.response?.status === 401) {
+        alert('Session expired. Please login again.')
+        window.location.href = '/login'
+      } else {
+        alert('Failed to load routes: ' + (err.response?.data?.error || err.message))
+      }
     } finally { setLoading(false) }
   }
 
@@ -26,9 +34,14 @@ const RoutesPage = () => {
   const addRoute = async (e) => {
     e.preventDefault()
     if (!routeId.trim()) return
-    await api.createRoute({ route_id: routeId, distance_km: Number(distanceKm), traffic_level: trafficLevel, base_time_minutes: Number(baseTime) })
-    setRouteId(''); setDistanceKm(10); setTrafficLevel('Low'); setBaseTime(30)
-    load()
+    try {
+      await api.createRoute({ route_id: routeId, distance_km: Number(distanceKm), traffic_level: trafficLevel, base_time_minutes: Number(baseTime) })
+      setRouteId(''); setDistanceKm(10); setTrafficLevel('Low'); setBaseTime(30)
+      load()
+    } catch (err) {
+      console.error('Error creating route:', err)
+      alert('Failed to create route: ' + (err.response?.data?.error || err.response?.data?.details?.join(', ') || err.message))
+    }
   }
 
   const startEdit = (r) => {
@@ -37,10 +50,30 @@ const RoutesPage = () => {
   }
   const cancelEdit = () => { setEditingId(null) }
   const saveEdit = async (id) => {
-    await api.updateRoute(id, edit)
-    cancelEdit(); load()
+    try {
+      // Exclude route_id from update payload since it's not allowed to change
+      const updatePayload = {
+        distance_km: edit.distance_km,
+        traffic_level: edit.traffic_level,
+        base_time_minutes: edit.base_time_minutes
+      }
+      await api.updateRoute(id, updatePayload)
+      cancelEdit(); load()
+    } catch (err) {
+      console.error('Error updating route:', err)
+      alert('Failed to update route: ' + (err.response?.data?.error || err.response?.data?.details?.join(', ') || err.message))
+    }
   }
-  const removeRoute = async (id) => { if (!confirm('Delete this route?')) return; await api.deleteRoute(id); load() }
+  const removeRoute = async (id) => { 
+    if (!confirm('Delete this route?')) return; 
+    try {
+      await api.deleteRoute(id); 
+      load()
+    } catch (err) {
+      console.error('Error deleting route:', err)
+      alert('Failed to delete route: ' + (err.response?.data?.error || err.message))
+    }
+  }
 
   return (
     <div className="space-y-6">
@@ -74,7 +107,7 @@ const RoutesPage = () => {
                 <td className="py-3 px-4">{r.id}</td>
                 <td className="py-3 px-4">
                   {editingId === r.id ? (
-                    <input value={edit.route_id} onChange={(e)=>setEdit({...edit, route_id: e.target.value})} className="border rounded-md px-2 py-1 text-sm w-40"/>
+                    <input value={edit.route_id} disabled className="border rounded-md px-2 py-1 text-sm w-40 bg-gray-100 text-gray-500" title="Route ID cannot be changed"/>
                   ) : r.route_id}
                 </td>
                 <td className="py-3 px-4">

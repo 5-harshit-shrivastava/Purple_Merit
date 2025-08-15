@@ -27,7 +27,7 @@ app.set('trust proxy', 1);
 app.use(helmet());
 app.use(cors({
   origin: process.env.NODE_ENV === 'production'
-    ? (process.env.FRONTEND_URL || 'https://purplemerit-frontend.vercel.app').split(',')
+    ? (process.env.FRONTEND_URL || 'https://purplemerit-frontend.onrender.com').split(',')
     : ['http://localhost:3000', 'http://localhost:5173', 'http://localhost:5174'],
   credentials: true,
   methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],

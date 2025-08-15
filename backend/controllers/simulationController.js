@@ -51,7 +51,12 @@ class PurpleMeritRules {
 
   // Rule 5: Overall Profit Calculation
   static calculateOrderProfit(orderValue, bonus, penalty, fuelCost) {
-    return parseFloat((orderValue + bonus - penalty - fuelCost).toFixed(2));
+    const value = parseFloat(orderValue) || 0;
+    const bonusAmount = parseFloat(bonus) || 0;
+    const penaltyAmount = parseFloat(penalty) || 0;
+    const fuel = parseFloat(fuelCost) || 0;
+    
+    return parseFloat((value + bonusAmount - penaltyAmount - fuel).toFixed(2));
   }
 
   // Rule 6: Efficiency Score

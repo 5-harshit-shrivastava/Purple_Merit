@@ -1,7 +1,7 @@
 import axios from 'axios'
 
 const api = axios.create({
-  baseURL: import.meta.env.VITE_API_BASE_URL || 'http://localhost:50001/api'
+  baseURL: import.meta.env.VITE_API_BASE_URL || 'https://purplemerit-backend.onrender.com/api'
 })
 
 api.interceptors.request.use((config) => {
